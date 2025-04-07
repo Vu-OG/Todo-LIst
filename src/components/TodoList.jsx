@@ -6,10 +6,10 @@ function TodoList() {
       });
     useEffect(() => {
         localStorage.setItem('items', JSON.stringify(items));
-        console.log(items);
     }),[items];
     const checkboxClick = (e, id) => {
         const isChecked = e.currentTarget ? e.currentTarget.checked :false;
+        console.log(isChecked);
         setItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === id ? { ...item, checked: isChecked} : item
@@ -25,7 +25,7 @@ function TodoList() {
             const newItem = {
                 id: Date.now(),
                 name: document.querySelector('.additem input[type="text"]').value,
-                status: (document.querySelector('.additem input[type="checkbox"]').checked)? true : false,
+                checked: (document.querySelector('.additem input[type="checkbox"]').checked)? true : false,
             }
             const items = localStorage.getItem('items');
             if (items) {
@@ -61,7 +61,7 @@ function TodoList() {
                     <li className={`px-[18px] py-[13px] flex w-[100%-_28*2px] mx-auto items-center justify-between bg-[#F4F4F4] rounded-[6px] mb-[8px]`}>
                         <img className="w-[30px] h-[30px] rounded-[6px] bg-[#7EB2FF]" src="" alt="" />
                         <h1 className="font-['Arial'] break-all text-left w-[calc(100%_-_30px_-17px*3_-_40px)]">{item.name}</h1>
-                        <input className={`outline-none w-[17px] h-[17px] appearance-none border-[#7EB2FF] border-[3px] rounded-[50px] checked:border-[#6bf16b]`} onChange={(e) => checkboxClick(e, item.id)}  checked = {item.status} type="checkbox" name="" id="" />
+                        <input className={`outline-none w-[17px] h-[17px] appearance-none border-[#7EB2FF] border-[3px] rounded-[50px] checked:border-[#6bf16b]`} onChange={(e) => checkboxClick(e, item.id)}  checked = {item.checked} type="checkbox" name="" id="" />
                         <button onClick={() => {removeItem(item.id)}} className={`w-[20px] h-[20px] bg-[#ff0033] flex items-center justify-center rounded-[5px] text-[white]`}>X</button>
                     </li>
                 ))}
