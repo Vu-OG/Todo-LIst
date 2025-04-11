@@ -1,3 +1,24 @@
 @import "tailwindcss";
-
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+select::-ms-expand {
+    display: none;
+  }
+.medium .priority {
+    background-color: #FEF186;
+    color: #884B00;
+}
+.low .priority {
+  background-color: #FFCACA;
+  color: #9E0812;
+}
+.high .priority {
+  background-color: #B9F8CF;
+  color: #016730;
+}
+.Completed .Status{
+  background-color: #B9F8CF;
+  color: #016730;
+}
+.Peding .Status{
+  background-color: #FFCACA;
+  color: #9E0812;
+}

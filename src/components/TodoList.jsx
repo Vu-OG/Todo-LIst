@@ -1,79 +1,131 @@
-import { useState, useEffect } from 'react'
-function TodoList() {
-    const [items, setItems] = useState(() => {
-        const savedItems = localStorage.getItem('items');
-        return (savedItems) ? JSON.parse(savedItems) : [];
-      });
-    useEffect(() => {
-        localStorage.setItem('items', JSON.stringify(items));
-    }),[items];
-    const checkboxClick = (e, id) => {
-        const isChecked = e.currentTarget ? e.currentTarget.checked :false;
-        console.log(isChecked);
-        setItems((prevItems) =>
-            prevItems.map((item) =>
-                item.id === id ? { ...item, checked: isChecked} : item
-            )
-        );
-    }
-    const removeItem = (id) => {
-        setItems((prevItems) => prevItems.filter((item) => item.id !== id));
-    };
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-    const AddItem = () => {
-        if(document.querySelector('input[type="text"]').value !== "") {
-            const newItem = {
-                id: Date.now(),
-                name: document.querySelector('.additem input[type="text"]').value,
-                checked: (document.querySelector('.additem input[type="checkbox"]').checked)? true : false,
-            }
-            const items = localStorage.getItem('items');
-            if (items) {
-                const parsedItems = JSON.parse(items);
-                parsedItems.push(newItem);
-                localStorage.setItem('items', JSON.stringify(parsedItems));
-            } else {
-                localStorage.setItem('items', JSON.stringify([newItem]));
-            }
-            setItems(JSON.parse(localStorage.getItem('items')));
-            document.querySelector('.additem input[type="text"]').value = "";
-            document.querySelector('.additem input[type="checkbox"]').checked = false;
-        }else{
-            document.querySelector('input[type="text"]').style.transition = "0s";
-            document.querySelector('input[type="text"]').placeholder = "Please enter a task";
-            document.querySelector('input[type="text"]').style.border = "1px solid red";
-            setTimeout(() => {
-                document.querySelector('input[type="text"]').style.transition = "1s";
-            }, 50);
-            setTimeout(() => {
-                document.querySelector('input[type="text"]').style.border = "1px solid transparent";
-            }, 100);
+
+function TodoList({ setTodo }) {
+  const [data, setData] = useState([]);
+  const [time, setTime] = useState(0);
+  const [filter, setFilter] = useState(() => {
+    return ["all", "all"];
+  });
+  const reloadTodoList = () => {
+    fetch('https://67f54f3d913986b16fa41c46.mockapi.io/api/v1/todolist/todoList')
+      .then(res => res.json())
+      .then(data => {
+        setData(data);
+        if (data.length === 0) {
+          setData([])
         }
+      })
+  }
+  useEffect(() => {
+    if (time === 0) {
+      setTime(1);
+      reloadTodoList();
     }
+  }, [data]);
+  const Checked = (e, id) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const checkbox = e.currentTarget.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    fetch(`https://67f54f3d913986b16fa41c46.mockapi.io/api/v1/todolist/todoList/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        completed: checkbox.checked
+      })
+    })
 
-    return (
-        <>
-        <div className="w-[100%]">
-            <h1 className="text-[27px] scroll-none  font-['Outfit',_sans-serif optical-auto font-[300] not-italic flex w-[calc(100%_-_80px)] mx-auto pt-[91px] mb-[28px]">Today’s Tasks</h1>
-            <ul className="listItem [scrollbar-width:none] overflow-y-scroll h-[60vh] w-[calc(100%_-_28*2px)] mx-auto block">
+  }
+  useEffect(() => {
 
-                {items.map((item) => (
-                    <li className={`px-[18px] py-[13px] flex w-[100%-_28*2px] mx-auto items-center justify-between bg-[#F4F4F4] rounded-[6px] mb-[8px]`}>
-                        <img className="w-[30px] h-[30px] rounded-[6px] bg-[#7EB2FF]" src="" alt="" />
-                        <h1 className="font-['Arial'] break-all text-left w-[calc(100%_-_30px_-17px*3_-_40px)]">{item.name}</h1>
-                        <input className={`outline-none w-[17px] h-[17px] appearance-none border-[#7EB2FF] border-[3px] rounded-[50px] checked:border-[#6bf16b]`} onChange={(e) => checkboxClick(e, item.id)}  checked = {item.checked} type="checkbox" name="" id="" />
-                        <button onClick={() => {removeItem(item.id)}} className={`w-[20px] h-[20px] bg-[#ff0033] flex items-center justify-center rounded-[5px] text-[white]`}>X</button>
-                    </li>
-                ))}
-        </ul>
+  }, [filter]);
+  const filerByPriority = (e) => {
+    e.preventDefault();
+    setFilter([e.target.value, filter[1]]);
+  }
+  const filerByCompleted = (e) => {
+    e.preventDefault();
+    setFilter([filter[0], e.target.value]);
+  }
+
+  return (
+    <>
+      <div className="flex">
+        <div className="p-[16px] lg:w-[288px] rounded-[5px] shadow-md">
+          <h1 className="mb-[16px] font-semibold text-[18px]">Filters</h1>
+          <div>
+            <label className="text-[14px] text-gray-700 font-medium">Priority</label> <br />
+            <select id = "Priority" onChange={(e) => filerByPriority(e)} className="mt-[4px] p-2 w-[256px] h-[39px] border rounded">
+              <option value="all">All Priority</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div className="my-[16px] ">
+            <label className="text-gray-700 font-medium rounded">Completed</label> <br />
+            <select id = "Completed" onChange={(e) => filerByCompleted(e)} className="mt-[4px] text-[14px] mt-[4px] p-2 w-[256px] h-[39px] border">
+              <option value="all">All</option>
+              <option value={true}>Completed</option>
+              <option value={false}>Peding</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[14px] text-gray-700 font-medium rounded">Date Range</label>
+            <input type="date" className="mt-[4px] p-2 w-[256px] h-[39px] border" />
+            <input type="date" className="mt-[4px] p-2 w-[256px] h-[39px] border" />
+          </div>
+          <button onClick={()=>{
+            setFilter(["all", "all"]);
+            reloadTodoList();
+            document.getElementById("Priority").value = "all";
+            document.getElementById("Completed").value = "all";
+
+          }} className="bg-black w-[256px] h-[45px] rounded mt-[16px] text-white">Clear Filters</button>
         </div>
-        <div className={`additem px-[18px] py-[13px] flex w-[calc(100%_-_56px)] items-center justify-between bg-[#F4F4F4] rounded-[6px] mb-[8px] fixed bottom-[20px] left-[50%] translate-x-[-50%]`}>
-                <img className="w-[30px] h-[30px] rounded-[6px] bg-[#7EB2FF]" src="" alt="" />
-                <input className="rounded-[5px] transition-[0.5s] font-['Arial'] break-all text-left w-[calc(100%_-_30px_-17px*3_-_40px)] outline-none" type = "text" placeholder="Add a new task" />
-                <input className={` outline-none w-[17px] h-[17px] appearance-none border-[#7EB2FF] border-[3px] rounded-[50px] checked:border-[#6bf16b]`} type="checkbox" name="" id="" />
-                <button onClick={() => AddItem()} className={`w-[20px] h-[20px] bg-[#ff0033] flex items-center justify-center rounded-[5px] text-[white]`}>+</button>
-            </div>
-        </>
-    );
+        <ul oncha className="relative list w-[100%] h=[100px] p-[16px]">
+          <div className='relative z-[2] bg-white'>
+            {
+              data.map((item) => {
+                if (data.length === 0) {
+                  return
+                } else {
+                  if ((item.priority === filter[0] || filter[0] === "all") && (item.completed.toString() === filter[1] || filter[1] === "all")) {
+                    return (
+                      <li onClick={() => setTodo(item)} key={item.id} className={` ${item.priority} mb-[16px] justify-between flex w-[100%] p-[16px] shadow-md`}>
+                        <div className="left">
+                          <h1 className="font-semibold text-[18px]">{item.title}</h1>
+                          <div className="flex items-center text-gray-500 text-sm mt-2">
+                            <svg className="flex items-center text-gray-500 text-sm mt-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-4 h-4 mr-1"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+                          </div>
+                        </div>
+                        <div className="right items-center flex">
+                          <h1 className={`capitalize priority font-semibold px-2 flex items-center h-[24px] rounded-full text-xs `}>{item.priority}</h1>
+                          <div className="flex items-center ml-[16px] gap-[8px]">
+                            <div onClick={(e) => {
+                              Checked(e, item.id);
+                            }} className="cursor-pointer relative h-[20px] w-[20px]">
+                              <input checked={item.completed} className="completed [pointer-events:_none] border-gray-300 w-[20px] h-[20px] appearance-none outline-none appearance-none border-[#7EB2FF] border-[2px] rounded-[5px] checked:border-[0] checked:bg-[#2b7fff]" type="checkbox" />
+                              <svg className="absolute top-[50%] left-[50%] translate-[-50%] lucide lucide-circle-check-big w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                            </div>
+                            <p className="text-black font-[300] text-[17px]">Mark Complete</p>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  }
+                }
+              })
+            }
+          </div>
+          <p className="top-[20px] left-[20px] absolute z-[0]">Loading</p>
+        </ul>
+      </div>
+    </>
+  );
 }
 export default TodoList;
